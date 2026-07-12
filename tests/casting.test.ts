@@ -37,6 +37,17 @@ describe('六种起卦方式', () => {
     expect(result.calculation.join(' ')).toContain('年支7')
   })
 
+  it('提供数学余数、归一化取数与先天八卦校验', () => {
+    const result = castByTime(new Date(2026, 6, 12, 12, 0, 0))
+
+    expect(result).toMatchObject({ upperNumber: 8, lowerNumber: 7, movingLine: 5 })
+    expect(result.calculationChecks).toMatchObject([
+      { role: 'upper', source: 40, divisor: 8, quotient: 5, rawRemainder: 0, normalizedValue: 8, trigram: { name: '坤', symbol: '☷', nature: '地' }, verified: true },
+      { role: 'lower', source: 47, divisor: 8, quotient: 5, rawRemainder: 7, normalizedValue: 7, trigram: { name: '艮', symbol: '☶', nature: '山' }, verified: true },
+      { role: 'moving', source: 47, divisor: 6, quotient: 7, rawRemainder: 5, normalizedValue: 5, verified: true },
+    ])
+  })
+
   it('支持两数与三数起卦', () => {
     const twoNumbers = castByNumbers(3, 5)
     const threeNumbers = castByNumbers(3, 5, 11)

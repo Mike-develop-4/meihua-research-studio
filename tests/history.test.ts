@@ -25,7 +25,7 @@ describe('本地卦例与报告', () => {
 
     expect(serialized).toContain('"version":1')
     expect(deserializeRecords(serialized)[0]).toMatchObject({
-      context: { question: context.question },
+      context: { question: context.question, activityState: 'uncertain' },
       casting: { main: { name: '天地否' } },
     })
   })
@@ -43,6 +43,8 @@ describe('本地卦例与报告', () => {
 
     expect(restored[0].analysis.phases[1].influences).toHaveLength(2)
     expect(restored[0].analysis.phases[1].body.name).toBe(record.analysis.phases[0].body.name)
+    expect(restored[0].context.activityState).toBe('uncertain')
+    expect(restored[0].analysis.timing.activityState).toBe('uncertain')
   })
 
   it('新记录置顶且最多保留三十条', () => {
@@ -61,6 +63,8 @@ describe('本地卦例与报告', () => {
     expect(report).toContain('天地否')
     expect(report).toContain('综合判断')
     expect(report).toContain('行动建议')
+    expect(report).toContain('月令五行')
+    expect(report).toContain('起卦时状态')
     expect(report).toContain('传统文化')
   })
 

@@ -20,13 +20,18 @@ export function controls(source: Element, target: Element): boolean {
 }
 
 export function getSeasonalStrength(element: Element, monthBranch: string): SeasonalStrength {
-  const season = MONTH_ELEMENT[monthBranch]
-  if (!season) throw new Error(`无法识别月令：${monthBranch}`)
+  const season = getMonthElement(monthBranch)
   if (element === season) return '旺'
   if (generates(season, element)) return '相'
   if (generates(element, season)) return '休'
   if (controls(element, season)) return '囚'
   return '死'
+}
+
+export function getMonthElement(monthBranch: string): Element {
+  const element = MONTH_ELEMENT[monthBranch]
+  if (!element) throw new Error(`无法识别月令：${monthBranch}`)
+  return element
 }
 
 export function getElementRelation(body: Element, use: Element): { relation: ElementRelationName; delta: number; description: string } {

@@ -23,11 +23,14 @@ export interface Hexagram {
 
 export type QuestionCategory = 'project' | 'career' | 'finance' | 'relationship' | 'study' | 'search' | 'health' | 'general'
 export type TimeHorizon = 'one-month' | 'three-months' | 'one-year' | 'long-term'
+export type ActivityState = 'sitting' | 'standing' | 'walking' | 'running' | 'lying' | 'uncertain'
 export type CastingMethod = 'time' | 'numbers' | 'words' | 'objects' | 'direction' | 'custom'
 
 export interface QuestionContext {
   question: string
   category: QuestionCategory
+  categoryLabel?: string
   subject: string
   horizon: TimeHorizon
+  activityState?: ActivityState
 }

@@ -1,4 +1,4 @@
-import { AlertCircle, Clock3, Eye, Footprints, Layers3, ShieldAlert } from 'lucide-react'
+import { AlertCircle, Clock3, Eye, Footprints, Layers3, Orbit, ShieldAlert } from 'lucide-react'
 import type { ReadingAnalysis } from '../domain/analysis'
 import type { CastingResult } from '../domain/casting'
 
@@ -15,6 +15,20 @@ export function AnalysisSections({ analysis, casting }: { analysis: ReadingAnaly
         <p className="large-reading">{analysis.movingLine.meaning}</p>
       </section>
 
+      <section className="reading-section season-section" aria-labelledby="season-title">
+        <div className="reading-section-heading">
+          <div><h2 id="season-title">月令与旺衰</h2><p>{analysis.season.monthBranch}月 · 月令五行{analysis.season.monthElement}</p></div>
+          <Orbit size={22} />
+        </div>
+        <p className="season-explanation">{analysis.season.explanation}</p>
+        <div className="season-ledger">
+          <div className="season-item body"><span>固定体卦</span><strong>{analysis.season.body.trigram.name} · {analysis.season.body.trigram.element}</strong><em>{analysis.season.body.strength}</em></div>
+          {analysis.season.influences.map((item) => (
+            <div className="season-item" key={`${item.role}-${item.trigram.name}`}><span>{item.role}</span><strong>{item.trigram.name} · {item.trigram.element}</strong><em>{item.strength}</em></div>
+          ))}
+        </div>
+      </section>
+
       <section className="reading-section action-section" aria-labelledby="action-title">
         <div className="reading-section-heading"><div><h2 id="action-title">行动建议</h2><p>把卦象转化为可验证、可调整的现实动作。</p></div></div>
         <div className="action-columns">
@@ -26,7 +40,7 @@ export function AnalysisSections({ analysis, casting }: { analysis: ReadingAnaly
 
       <section className="reading-section timing-section">
         <Clock3 size={20} />
-        <div><h2>应期参考</h2><strong>{analysis.timing.label}</strong><p>{analysis.timing.basis}</p><small>{analysis.timing.disclaimer}</small></div>
+        <div><h2>应期参考</h2><span className="timing-state">起卦时状态：{analysis.timing.activityLabel}</span><strong>{analysis.timing.label}</strong><p>{analysis.timing.basis}</p><small>{analysis.timing.disclaimer}</small></div>
       </section>
 
       <details className="reading-section calculation-details">

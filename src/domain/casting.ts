@@ -1,6 +1,19 @@
 import { buildHexagram, getChangedHexagram, getMutualHexagram, normalizedRemainder, trigramByNumber } from './hexagrams'
 import { earthlyBranchNumber, lunarInfoForDate, type LunarInfo } from './lunar'
-import type { CastingMethod, Hexagram } from './types'
+import type { CastingMethod, Hexagram, Trigram } from './types'
+
+export type CalculationRole = 'upper' | 'lower' | 'moving'
+
+export interface CalculationCheck {
+  readonly role: CalculationRole
+  readonly source: number
+  readonly divisor: 8 | 6
+  readonly quotient: number
+  readonly rawRemainder: number
+  readonly normalizedValue: number
+  readonly trigram?: Trigram
+  readonly verified: boolean
+}
 
 export interface CastingResult {
   readonly id: string
@@ -15,6 +28,7 @@ export interface CastingResult {
   readonly mutual: Hexagram
   readonly changed: Hexagram
   readonly calculation: readonly string[]
+  readonly calculationChecks: readonly CalculationCheck[]
   readonly lunarInfo: LunarInfo
 }
 
@@ -33,6 +47,22 @@ function assertPositiveInteger(value: number, label: string): void {
 
 function currentLunarInfo(date = new Date()): LunarInfo {
   return lunarInfoForDate(date)
+}
+
+function createCalculationCheck(role: CalculationRole, source: number, divisor: 8 | 6): CalculationCheck {
+  const rawRemainder = source % divisor
+  const normalizedValue = normalizedRemainder(source, divisor)
+  const expectedValue = rawRemainder === 0 ? divisor : rawRemainder
+  return {
+    role,
+    source,
+    divisor,
+    quotient: Math.floor(source / divisor),
+    rawRemainder,
+    normalizedValue,
+    ...(role === 'moving' ? {} : { trigram: trigramByNumber(normalizedValue) }),
+    verified: normalizedValue === expectedValue,
+  }
 }
 
 function createCasting(
@@ -65,6 +95,11 @@ function createCasting(
     mutual: getMutualHexagram(main),
     changed: getChangedHexagram(main, movingLine),
     calculation,
+    calculationChecks: [
+      createCalculationCheck('upper', upperSource, 8),
+      createCalculationCheck('lower', lowerSource, 8),
+      createCalculationCheck('moving', movingSource, 6),
+    ],
     lunarInfo,
   }
 }
@@ -87,9 +122,9 @@ export function castByTime(date = new Date()): CastingResult {
     lowerSource,
     `${lunar.yearGanZhi}年 农历${lunar.lunarMonthText}月${lunar.lunarDayText} ${lunar.timeBranch}时`,
     [
-      `上卦：年支${yearNumber}＋农历月${lunar.lunarMonth}＋农历日${lunar.lunarDay}＝${upperSource}，除8余${normalizedRemainder(upperSource, 8)}`,
-      `下卦：${upperSource}＋时支${timeNumber}＝${lowerSource}，除8余${normalizedRemainder(lowerSource, 8)}`,
-      `动爻：${lowerSource}除6余${normalizedRemainder(lowerSource, 6)}`,
+      `上卦数源：年支${yearNumber}＋农历月${lunar.lunarMonth}＋农历日${lunar.lunarDay}＝${upperSource}`,
+      `下卦数源：${upperSource}＋时支${timeNumber}＝${lowerSource}`,
+      `动爻数源：取下卦总数${lowerSource}`,
     ],
     date,
     lunar,
@@ -108,9 +143,9 @@ export function castByNumbers(first: number, second: number, third?: number): Ca
     movingSource,
     third === undefined ? `两数：${first}、${second}` : `三数：${first}、${second}、${third}`,
     [
-      `上卦：${first}除8余${normalizedRemainder(first, 8)}`,
-      `下卦：${second}除8余${normalizedRemainder(second, 8)}`,
-      `动爻：${movingSource}除6余${normalizedRemainder(movingSource, 6)}`,
+      `上卦数源：${first}`,
+      `下卦数源：${second}`,
+      `动爻数源：${movingSource}`,
     ],
   )
 }

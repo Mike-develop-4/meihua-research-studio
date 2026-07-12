@@ -14,7 +14,7 @@ export function VerdictPanel({ analysis, context }: VerdictPanelProps) {
         <p className="question-echo">{context.question}</p>
         <h2 id="verdict-title">{analysis.summary.headline}</h2>
         <p>{analysis.summary.narrative}</p>
-        <div className="verdict-context"><span>{analysis.category.label}</span><i /> <span>体：{analysis.category.bodyRole}</span><i /> <span>用：{analysis.category.useRole}</span></div>
+        <div className="verdict-context"><span>{analysis.category.label}</span><i /><span>主体：{context.subject || '求测者'}</span><i /><span>体：{analysis.category.bodyRole}</span><i /><span>用：{analysis.category.useRole}</span></div>
       </div>
       <div className="score-dial" aria-label={`趋势整理分${analysis.score}分`}>
         <Gauge size={18} />

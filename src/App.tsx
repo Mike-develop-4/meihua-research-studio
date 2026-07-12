@@ -13,10 +13,14 @@ import { ReviewStep } from './features/ReviewStep'
 
 const initialContext: QuestionContext = {
   question: '',
-  category: 'project',
+  category: 'general',
+  categoryLabel: '',
   subject: '',
   horizon: 'one-year',
+  activityState: 'uncertain',
 }
+
+const returnToTop = () => window.scrollTo({ top: 0, behavior: 'auto' })
 
 export default function App() {
   const [step, setStep] = useState<1 | 2 | 3>(1)
@@ -33,6 +37,7 @@ export default function App() {
     setCurrent(null)
     setQuestionError('')
     setHistoryOpen(false)
+    returnToTop()
   }
 
   const enterMethods = () => {
@@ -42,11 +47,13 @@ export default function App() {
     }
     setQuestionError('')
     setStep(2)
+    returnToTop()
   }
 
   const reviewCasting = (casting: CastingResult) => {
     setPreview(casting)
     setStep(3)
+    returnToTop()
   }
 
   const generateReading = () => {
@@ -54,6 +61,7 @@ export default function App() {
     const analysis = analyzeReading(preview, context)
     const record = createReadingRecord(context, preview, analysis)
     setCurrent(record)
+    returnToTop()
     setRecords((existing) => {
       const next = addReadingRecord(existing, record)
       localStorage.setItem(HISTORY_STORAGE_KEY, serializeRecords(next))
@@ -66,6 +74,7 @@ export default function App() {
     setContext(record.context)
     setPreview(record.casting)
     setHistoryOpen(false)
+    returnToTop()
   }
 
   const toggleRecordFavorite = (id: string) => {
@@ -77,7 +86,7 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-visual-theme="apple">
       <AppHeader historyCount={records.length} onHistory={() => setHistoryOpen(true)} onReset={reset} compact={Boolean(current)} />
       {current ? (
         <ReadingWorkspace record={current} />

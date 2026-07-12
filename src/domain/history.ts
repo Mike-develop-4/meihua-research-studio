@@ -26,7 +26,13 @@ export function createReadingRecord(
   return {
     id: `${casting.id}-${context.question.trim().slice(0, 16)}`,
     savedAt: new Date().toISOString(),
-    context: { ...context, question: context.question.trim(), subject: context.subject.trim() },
+    context: {
+      ...context,
+      question: context.question.trim(),
+      subject: context.subject.trim(),
+      categoryLabel: context.categoryLabel?.trim() || undefined,
+      activityState: context.activityState ?? 'uncertain',
+    },
     casting,
     analysis,
   }
@@ -49,7 +55,8 @@ export function deserializeRecords(raw: string | null): ReadingRecord[] {
     )).slice(0, 30)
     return validRecords.flatMap((record) => {
       try {
-        return [{ ...record, analysis: analyzeReading(record.casting, record.context) }]
+        const context: QuestionContext = { ...record.context, activityState: record.context.activityState ?? 'uncertain' }
+        return [{ ...record, context, analysis: analyzeReading(record.casting, context) }]
       } catch {
         return []
       }

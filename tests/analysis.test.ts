@@ -8,6 +8,7 @@ const projectQuestion: QuestionContext = {
   category: 'project',
   subject: '项目团队',
   horizon: 'one-year',
+  activityState: 'uncertain',
 }
 
 describe('体用与综合解卦', () => {
@@ -29,6 +30,38 @@ describe('体用与综合解卦', () => {
     expect(getSeasonalStrength('土', '未')).toBe('旺')
     expect(getSeasonalStrength('金', '未')).toBe('相')
     expect(getSeasonalStrength('木', '未')).toBe('囚')
+  })
+
+  it('公开月令五行及其对体卦和各阶段影响卦的旺衰依据', () => {
+    const casting = castCustom(8, 5, 3)
+    const summerCasting = { ...casting, lunarInfo: { ...casting.lunarInfo, monthBranch: '未' } }
+    const analysis = analyzeReading(summerCasting, projectQuestion)
+
+    expect(analysis.season).toMatchObject({
+      monthBranch: '未',
+      monthElement: '土',
+      body: { trigram: { name: '坤', element: '土' }, strength: '旺' },
+    })
+    expect(analysis.season.influences).toEqual(expect.arrayContaining([
+      expect.objectContaining({ role: '本卦用卦', trigram: expect.objectContaining({ name: '巽', element: '木' }), strength: '囚' }),
+      expect.objectContaining({ role: '上互', trigram: expect.objectContaining({ name: '震', element: '木' }), strength: '囚' }),
+      expect.objectContaining({ role: '下互', trigram: expect.objectContaining({ name: '兑', element: '金' }), strength: '相' }),
+    ]))
+    expect(analysis.season.explanation).toMatch(/未月.*土.*体卦.*旺/)
+  })
+
+  it('按起卦时行坐动静调整应期快慢，但不伪造精确日期', () => {
+    const casting = castCustom(1, 8, 1)
+    const sitting = analyzeReading(casting, { ...projectQuestion, activityState: 'sitting' })
+    const walking = analyzeReading(casting, { ...projectQuestion, activityState: 'walking' })
+    const uncertain = analyzeReading(casting, { ...projectQuestion, activityState: 'uncertain' })
+
+    expect(sitting.timing).toMatchObject({ activityState: 'sitting', pace: 'slower' })
+    expect(walking.timing).toMatchObject({ activityState: 'walking', pace: 'faster' })
+    expect(sitting.timing.basis).toContain('坐则事应迟')
+    expect(walking.timing.basis).toContain('行则事应速')
+    expect(uncertain.timing).toMatchObject({ activityState: 'uncertain', pace: 'uncertain' })
+    expect(JSON.stringify([sitting.timing, walking.timing])).not.toMatch(/\d{4}[-年]\d{1,2}/)
   })
 
   it('互卦沿用本卦固定体卦并分别分析上下互对体卦的作用', () => {
@@ -89,5 +122,17 @@ describe('体用与综合解卦', () => {
 
     expect(allText).toContain('专业')
     expect(allText).not.toMatch(/患有|确诊|癌症|必死/)
+  })
+
+  it('自定义事项类型保留用户名称并使用一般问事解释边界', () => {
+    const analysis = analyzeReading(castCustom(1, 8, 1), {
+      ...projectQuestion,
+      category: 'general',
+      categoryLabel: '家庭规划',
+    })
+
+    expect(analysis.category.label).toBe('家庭规划')
+    expect(analysis.category.bodyRole).toContain('求测者')
+    expect(analysis.category.useRole).toContain('所问之事')
   })
 })

@@ -1,10 +1,10 @@
 import { CATEGORY_GUIDANCE } from '../data/category-guidance'
 import type { CastingResult } from './casting'
 import { getHexagramTheme } from './hexagrams'
-import { getElementRelation, getSeasonalStrength, generates, STRENGTH_RANK, type ElementRelationName, type SeasonalStrength } from './elements'
-import type { Element, Hexagram, QuestionContext, Trigram } from './types'
+import { getElementRelation, getMonthElement, getSeasonalStrength, generates, STRENGTH_RANK, type ElementRelationName, type SeasonalStrength } from './elements'
+import type { ActivityState, Element, Hexagram, QuestionContext, Trigram } from './types'
 
-export { getElementRelation, getSeasonalStrength }
+export { getElementRelation, getMonthElement, getSeasonalStrength }
 
 type BodySide = 'upper' | 'lower'
 type EvidenceKind = 'support' | 'pressure' | 'neutral'
@@ -59,8 +59,36 @@ export interface ReadingAnalysis {
   movingLine: { position: number; label: string; meaning: string }
   category: { label: string; focus: string; bodyRole: string; useRole: string }
   actions: { now: readonly string[]; prevent: readonly string[]; observe: readonly string[] }
-  timing: { label: string; basis: string; disclaimer: string }
+  season: {
+    monthBranch: string
+    monthElement: Element
+    body: { trigram: Trigram; strength: SeasonalStrength }
+    influences: readonly { role: '本卦用卦' | '上互' | '下互' | '变卦'; trigram: Trigram; strength: SeasonalStrength }[]
+    explanation: string
+  }
+  timing: {
+    label: string
+    basis: string
+    disclaimer: string
+    activityState: ActivityState
+    activityLabel: string
+    pace: 'fastest' | 'faster' | 'baseline' | 'slower' | 'slowest' | 'uncertain'
+  }
   party: { bodySupport: number; useSupport: number; explanation: string }
+}
+
+const ACTIVITY_TIMING: Readonly<Record<ActivityState, {
+  label: string
+  pace: ReadingAnalysis['timing']['pace']
+  rule: string
+  reading: string
+}>> = {
+  sitting: { label: '坐着静止', pace: 'slower', rule: '坐则事应迟', reading: '相对基准偏迟' },
+  standing: { label: '站立静止', pace: 'baseline', rule: '立取常速', reading: '按常速观察' },
+  walking: { label: '行走中', pace: 'faster', rule: '行则事应速', reading: '相对基准偏快' },
+  running: { label: '快走或跑动中', pace: 'fastest', rule: '走则愈速', reading: '应象节奏最快' },
+  lying: { label: '躺卧静止', pace: 'slowest', rule: '卧则愈迟', reading: '应象节奏最慢' },
+  uncertain: { label: '不确定', pace: 'uncertain', rule: '动静未记录', reading: '不作快慢校正' },
 }
 
 const PHASE_META = [
@@ -225,12 +253,34 @@ function summaryFor(phases: readonly PhaseAnalysis[], score: number): ReadingAna
   return { headline, narrative, tone }
 }
 
-function timingFor(casting: CastingResult): ReadingAnalysis['timing'] {
-  const period = Math.max(1, Math.min(12, casting.changed.upper.number + casting.changed.lower.number))
+function buildSeason(monthBranch: string, phases: readonly PhaseAnalysis[]): ReadingAnalysis['season'] {
+  const monthElement = getMonthElement(monthBranch)
+  const body = { trigram: phases[0].body, strength: phases[0].bodyStrength }
+  const influences = phases.flatMap((phase) => phase.influences.map((influence) => ({
+    role: (phase.key === 'main' ? '本卦用卦' : influence.role) as ReadingAnalysis['season']['influences'][number]['role'],
+    trigram: influence.trigram,
+    strength: influence.strength,
+  })))
   return {
-    label: `重点观察第${casting.movingLine}个阶段及约${period}个时间单位附近`,
-    basis: `参考动爻${casting.movingLine}、变卦上下卦数${casting.changed.upper.number}与${casting.changed.lower.number}综合取象。时间单位应按所问事项的自然周期理解。`,
-    disclaimer: '应期属于传统象数参考，不是精确日期预测。',
+    monthBranch,
+    monthElement,
+    body,
+    influences,
+    explanation: `${monthBranch}月月令五行为${monthElement}；体卦${body.trigram.name}属${body.trigram.element}，在当令为${body.strength}。旺衰已进入各阶段压力等级与趋势分值，不是只作旁注。`,
+  }
+}
+
+function timingFor(casting: CastingResult, context: QuestionContext, season: ReadingAnalysis['season']): ReadingAnalysis['timing'] {
+  const period = Math.max(1, Math.min(12, casting.changed.upper.number + casting.changed.lower.number))
+  const activityState = context.activityState ?? 'uncertain'
+  const activity = ACTIVITY_TIMING[activityState]
+  return {
+    label: `以约${period}个事项时间单位为观察基数 · ${activity.reading}`,
+    basis: `参考动爻${casting.movingLine}、变卦上下卦数${casting.changed.upper.number}与${casting.changed.lower.number}取基数；起卦时状态为${activity.label}，依“${activity.rule}”校正快慢。当前${season.monthBranch}月（${season.monthElement}令），体卦${season.body.strength}，作为当下承载力背景。`,
+    disclaimer: '应期属于传统象数的快慢与窗口参考；时间单位应按事项自然周期理解，不等同于精确日期。',
+    activityState,
+    activityLabel: activity.label,
+    pace: activity.pace,
   }
 }
 
@@ -238,6 +288,7 @@ export function analyzeReading(casting: CastingResult, context: QuestionContext)
   const monthBranch = casting.lunarInfo.monthBranch
   const fixedBodyUse = getBodyUse(casting.main, casting.movingLine)
   const phases = PHASE_META.map((phase) => analyzePhase(phase.key, casting, monthBranch, fixedBodyUse))
+  const season = buildSeason(monthBranch, phases)
   const party = calculateParty(phases)
   const rawScore = 50 + phases.reduce((sum, phase) => sum + phase.adjustedDelta, 0) + (party.bodySupport - party.useSupport) * 2
   const score = Math.max(8, Math.min(92, Math.round(rawScore)))
@@ -256,13 +307,14 @@ export function analyzeReading(casting: CastingResult, context: QuestionContext)
     evidence: buildEvidence(phases, party),
     contradiction: buildContradiction(phases),
     movingLine: { position: casting.movingLine, ...moving },
-    category: { label: guidance.label, focus: guidance.focus, bodyRole: guidance.bodyRole, useRole: guidance.useRole },
+    category: { label: context.categoryLabel?.trim() || guidance.label, focus: guidance.focus, bodyRole: guidance.bodyRole, useRole: guidance.useRole },
     actions: {
       now: [...guidance.now],
       prevent: [...guidance.prevent, ...relationAction],
       observe: [...guidance.observe],
     },
-    timing: timingFor(casting),
+    season,
+    timing: timingFor(casting, context, season),
     party,
   }
 }

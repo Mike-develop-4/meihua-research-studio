@@ -2,6 +2,7 @@ node_modules/
 dist/
 coverage/
 work/
+docs/superpowers/concepts/
 
 .env
 .env.*
