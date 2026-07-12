@@ -14,4 +14,5 @@ docs/superpowers/concepts/
 Thumbs.db
 .idea/
 .vscode/
+.worktrees/
 
