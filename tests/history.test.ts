@@ -65,6 +65,9 @@ describe('本地卦例与报告', () => {
     expect(report).toContain('行动建议')
     expect(report).toContain('月令五行')
     expect(report).toContain('起卦时状态')
+    expect(report).toContain('卦象推导')
+    expect(report).toContain('下互取2、3、4爻')
+    expect(report).toContain('体卦乾、用卦坤')
     expect(report).toContain('传统文化')
   })
 

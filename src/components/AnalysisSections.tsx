@@ -1,6 +1,7 @@
 import { AlertCircle, Clock3, Eye, Footprints, Layers3, Orbit, ShieldAlert } from 'lucide-react'
 import type { ReadingAnalysis } from '../domain/analysis'
 import type { CastingResult } from '../domain/casting'
+import { CastingDerivation } from './CastingDerivation'
 
 export function AnalysisSections({ analysis, casting }: { analysis: ReadingAnalysis; casting: CastingResult }) {
   return (
@@ -43,11 +44,11 @@ export function AnalysisSections({ analysis, casting }: { analysis: ReadingAnaly
         <div><h2>应期参考</h2><span className="timing-state">起卦时状态：{analysis.timing.activityLabel}</span><strong>{analysis.timing.label}</strong><p>{analysis.timing.basis}</p><small>{analysis.timing.disclaimer}</small></div>
       </section>
 
-      <details className="reading-section calculation-details">
-        <summary>查看完整计算过程与传统解释边界</summary>
+      <details className="reading-section calculation-details" open>
+        <summary>查看完整卦象推导链与传统解释边界</summary>
         <div className="calculation-detail-grid">
-          <div><h3>数源公式</h3><ol>{casting.calculation.map((item) => <li key={item}>{item}</li>)}</ol></div>
-          <div><h3>解释边界</h3><p>{analysis.category.focus}</p><p>本卦、互卦、变卦用于观察结构变化；它们可以映射为起点、内因和后续状态，但不应被机械地等同于固定日期上的“现在、过程、结局”。</p></div>
+          <CastingDerivation casting={casting} mode="full" />
+          <div className="interpretation-boundary"><h3>解释边界</h3><p>{analysis.category.focus}</p><p>本卦、互卦、变卦用于观察结构变化；它们可以映射为起点、内因和后续状态，但不应被机械地等同于固定日期上的“现在、过程、结局”。</p></div>
         </div>
       </details>
 

@@ -115,6 +115,10 @@ describe('起卦向导与解卦工作台', () => {
     expect(screen.getByRole('heading', { name: '卦势轨迹' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '证据链' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: '行动建议' })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: '卦象完整推导链' })).toBeInTheDocument()
+    expect(screen.getByText('下互取第2、3、4爻')).toBeInTheDocument()
+    expect(screen.getByText('动爻所在下卦为用，上卦为体')).toBeInTheDocument()
+    expect(document.querySelector('details.calculation-details')).toHaveAttribute('open')
     expect(screen.getByText('传统文化解释与情景反思工具')).toBeInTheDocument()
   })
 

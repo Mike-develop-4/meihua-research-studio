@@ -1,4 +1,5 @@
 import type { ReadingRecord } from './history'
+import { formatDerivationSummary } from './derivation'
 
 function list(items: readonly string[]): string {
   return items.map((item, index) => `${index + 1}. ${item}`).join('\n')
@@ -17,6 +18,8 @@ export function formatReadingReport(record: ReadingRecord): string {
     `卦象：本卦${casting.main.name} → 互卦${casting.mutual.name} → 变卦${casting.changed.name}，动${casting.movingLine}爻`,
     `月令：${analysis.season.monthBranch}月｜月令五行${analysis.season.monthElement}｜体卦${analysis.season.body.trigram.name}${analysis.season.body.trigram.element}${analysis.season.body.strength}`,
     `应期：起卦时状态${analysis.timing.activityLabel}｜${analysis.timing.label}`,
+    '',
+    formatDerivationSummary(casting),
     '',
     '综合判断',
     `${analysis.summary.headline}。${analysis.summary.narrative}`,
